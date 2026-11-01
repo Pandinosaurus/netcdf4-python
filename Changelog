@@ -1,3 +1,158 @@
+ version 1.7.6 (not yet released)
+ ================================
+ * Speed up index setup in _StartCountStride (used when indexing variables) by
+   skipping numpy conversion for plain ints and slices and classifying each index once (PR #1524).
+
+ version 1.7.5.1.post1 (tag v1.7.5.1.post1rel)
+ =============================================
+ * fix installation of plugins into linux wheels.
+
+ version 1.7.5.1 (tag v1.7.5.1rel)
+ =================================
+ * make sure zstd compression filter test always runs unless specifically disabled, fix cli test so it runs on
+ 32-bit x86.  New wheels for linux that include plugins (they were left out of the 1.7.5 release).
+ * fix version comparison logic that was broken when using netcdf-c >= 4.10.0 - this was the cause of 
+ issue #1515 (diskless persisted datasets are no longer persisted).
+
+ version 1.7.5 (tag v1.7.5rel)
+ =============================
+ * remove python 3.10 support (it reaches EOL October 31, 2026).
+ * Reject fractional scalar indices instead of silently truncating reads or writes (issue #1350).
+ * Preserve surviving dimensions and decoded types for empty orthogonal selections,
+   including empty integer indices and all-false masks (PR #1499).
+ * Convert non-native-endian numeric attributes to native byte order before writing (issue #1502).
+ * Fix command-line usage error exit codes and --help handling, honour nc4tonc3 --chunk,
+   and fix ncinfo group dimension selection (issue #1500).
+ * Change default encoding for stringtochar/chartostring functions from 'utf-8' to 'utf-8'/'ascii' for dtype.kind='U'/'S'
+   (issue #1464).
+ * Fix DeprecationWarning for assigning to numpy.ndarray.shape for numpy >= 2.5.0 (issue #1468).
+ * Disable parallel support even if libs support it via DISABLE_PARALLEL_SUPPORT env var (issue #1389).
+
+ version 1.7.4 (tag v1.7.4rel)
+ ================================
+ * Make sure automatic conversion of character arrays <--> string arrays works for Unicode strings (issue #1440).
+   (previously only worked correctly for encoding="ascii").
+ * Add netcdf plugins (blosc, zstd, bzip2) in wheels.  Blosc plugin doesn't work in Windows wheels.
+   Macos wheels now use conda provided libs. (PR #1450)
+ * Add windows/arm (PR #1453) and free-threaded python wheels (issue #1454). Windows wheels now use netcdf-c 4.9.3.
+   WARNING:  netcdf-c is not thread-safe and netcdf4-python does have internal locking so expect segfaults if you
+   use netcdf4-python on multiple threads with free-threaded python.  Users must exercise care to only call netcdf from
+   a single thread.
+
+ version 1.7.3 (tag v1.7.3rel)
+ =============================
+ * Python 3.14 wheels (issue #1432)
+ * support os.PathLike arguments for `Dataset.fromcdl` and raise a `FileNotFoundError`
+   if the cdl is missing and a `FileExistsError` if the nc file already exists (PR #1387)
+ * raise more informative error when trying to iterate or
+   perform a membership operation on a Dataset (issue #1383)
+ * fix type hint for createEnumType (issue #1378)
+ * add python 3.13 to windows wheel builds (PR #1377)
+ * allow slicing of vlen and string variables with non-unitary strides (issue #1408).
+
+ version 1.7.2 (tag v1.7.2rel)
+ =============================
+ * add static type hints (PRs #1302, #1349)
+ * Expose nc_rc_set, nc_rc_get (via rc_set, rc_get module functions). (PR #1348)
+ * Add Variable.get_fill_value and allow `fill_value='default'` to 
+   set `_FillValue` attribute using default fill values.  (issue #1374, PR #1375).
+ * Fix NETCDF3 endian error (issue #1373, PR #1355).
+
+ version 1.7.1 (tag v1.7.1rel)
+===============================
+ * include nc_complex source code from v0.2.0 tag (instead of using submodule).
+ * add aarch64 wheels.
+
+ version 1.7.0 (tag v1.7.0rel)
+===============================
+ * add support for complex numbers via `auto_complex` keyword to `Dataset` (PR #1295)
+ * fix for deprecated Cython `DEF` and `IF` statements using compatibility header
+   with shims for unavailable functionality (PR #1277)
+ * use `szip` as the library name on Windows (PR #1304)
+ * add support for MS-MPI `MPI_Message` detection (PR #1305)
+ * fix for issue #1306 - surprising result when indexing vlen str with non-contiguous
+   indices.
+ * Fix bug in set_collective introduced in PR #1277 (collective mode was
+   always set).
+
+ version 1.6.5 (tag v1.6.5rel)
+===============================
+ * fix for issue #1271 (mask ignored if bool MA assigned to uint8 var)
+ * include information on specific object when reporting errors from netcdf-c
+ * python 3.12 wheels added, support for python 3.7 removed.
+
+ version 1.6.4 (tag v1.6.4rel)
+===============================
+ * set path to SSL certificates internally, so https DAP URLs work with wheels
+   (issue #1246, requires nc_rc_set function available starting with netcdf-c
+   4.9.1, plus bugfix in netcdf-c PR #2690).
+   Added certifi as a dependency.
+ * Added `isopen` method to `MFDataset` object to check if underlying files are open.
+
+ version 1.6.3 (tag v1.6.3rel)
+==============================
+ * Use ``nc_put_vars`` for strided writes for netcdf-c >= 4.6.2 (issue #1222).
+ * _Unsigned="false" should be same as not having _Unsigned set (issue #1232).
+   _Unsigned now must be set to "true" or "True" for variable to be interpreted
+   as unsigned, instead of just having _Unsigned be set (to anything).
+ * pypi wheels built with netcdf-c 4.9.1.
+
+ version 1.6.2 (tag v1.6.2rel)
+==============================
+ * Added ``netCDF4.__has_set_alignment__`` property to help identify if the
+   underlying netcdf4 supports setting the HDF5 alignment.
+ * Slicing multi-dimensional variables with an all False boolean index array
+   now returns an empty numpy array (instead of raising an exception - issue #1197).
+   Behavior now consistent with numpy slicing.
+ * fix problem with compiling using netcdf-c < 4.9.0 (issue #1209)
+ * pypi wheels build with netcdf-c 4.9.0.
+
+ version 1.6.1 (tag v1.6.1rel)
+==============================
+ * add Dataset methods has_<name>_filter (where <name>=zstd,blosc,bzip2,szip)
+   to check for availability of extra compression filters.
+ * release GIL for all C-lib calls (issue #1180).
+ * Add support for nc_set_alignment and nc_get_alignment to control alignment
+   of data within HDF5 files.
+
+ version 1.6.0 (tag v1.6.0rel)
+==============================
+ * add support for new quantization functionality in netcdf-c 4.9.0 via "signficant_digits"
+   and "quantize_mode" kwargs in Dataset.createVariable. Default quantization_mode is "BitGroom",
+   but alternate methods "BitRound" and GranularBitRound" also supported.
+ * opening a Dataset in append mode (mode = 'a' or 'r+') creates a Dataset
+   if one does not already exist (similar to python open builtin).  Issue #1144.
+   Added a mode='x' option (as in python open) which is the same as mode='w' with
+   clobber=False.
+ * allow createVariable to accept either Dimension instances or Dimension
+   names in "dimensions" tuple kwarg (issue #1145).
+ * remove all vestiges of python 2 in _netCDF4.pyx and set cython language_level
+   directive to 3 in setup.py.
+ * add 'compression' kwarg to createVariable to enable new compression
+   functionality in netcdf-c 4.9.0.  'None','zlib','szip','zstd','bzip2'
+   'blosc_lz','blosc_lz4','blosc_lz4hc','blosc_zlib' and 'blosc_zstd'
+   are currently supported. 'blosc_shuffle',
+   'szip_mask' and 'szip_pixels_per_block' kwargs also added.
+   compression='zlib' is equivalent to (the now deprecated) zlib=True.
+   If the environment variable NETCDF_PLUGIN_DIR is set to point to the
+   directory with the compression plugin lib__nc* files, then the compression plugins will
+   be installed within the package and be automatically available (the binary
+   wheels have this).  Otherwise, the environment variable HDF5_PLUGIN_PATH
+   needs to be set at runtime  to point to plugins in order to use the new compression
+   options.
+ * MFDataset did not aggregate 'name' variable attribute (issue #1153).
+ * issue warning instead of raising an exception if missing_value or
+   _FillValue can't be cast to the variable type when creating a
+   masked array (issue #1152).
+ * Define MPI_Session for compatibility with current mpi4py (PR #1156).
+
+ version 1.5.8 (tag v1.5.8rel)
+==============================
+ * Fix Enum bug (issue #1128): the enum_dict member of an EnumType read from a file
+   contains invalid values when the enum is large enough (more than 127 or 255
+   members).
+ * Binary wheels for aarch64 and python 3.10.
+
  version 1.5.7 (tag v1.5.7rel)
 ==============================
  * don't try to mask vlens with default  _FillValue, since vlens don't have a default _FillValue.
@@ -50,7 +205,7 @@
 
  version 1.5.3 (tag v1.5.3rel)
 ==============================
- * make sure arrays are masked that are not filled when auto_fill is off 
+ * make sure arrays are masked that are not filled when auto_fill is off
    (issue #972).
  * python 3.8 binary wheels.
 
@@ -92,7 +247,7 @@
  version 1.5.0.1 (tag v1.5.0.1rel)
 ==================================
  * binary wheels for linux and macosx rebuilt against netcdf-c 4.6.3 (instead
-   of 4.4.1.1).  
+   of 4.4.1.1).
  * add read-shared mode (mode='rs'). Significantly speeds up reads of NETCDF3
    files (pull request #902).
 
@@ -241,7 +396,7 @@
  * Fix for auto scaling and masking when _Unsigned attribute set (create
    view as unsigned type after scaling and masking). Issue #671.
  * Always mask values outside valid_min, valid_max (not just when
-   missing_value attribue present).  Issue #672.
+   missing_value attribute present).  Issue #672.
  * Fix setup.py so pip install doesn't fail if cython not installed.
    setuptools >= 18.0 now required for installation (Issue #666).
 
@@ -315,7 +470,7 @@
    reading, a vlen string array attribute is returned as a list of
    strings. To write, use var.setncattr_string("name", ["two", "strings"]).)
  * Fix for issue #596 - julian day calculations wrong for negative years,
-   caused incorrect rountrip num2date(date2num(date)) roundtrip for dates with year
+   caused incorrect roundtrip num2date(date2num(date)) roundtrip for dates with year
    < 0.
  * Make sure negative years work in utime.num2date (issue #596).
  * raise NotImplementedError when trying to pickle Dataset, Variable,
@@ -858,7 +1013,7 @@
    lib after the 4.2 release).  Controlled by kwarg 'diskless' to
    netCDF4.Dataset (default False). diskless=True when creating a file
    results in a file that exists only in memory, closing the file
-   makes the data disapper, except if persist=True keyword given in
+   makes the data disappear, except if persist=True keyword given in
    which case it is persisted to a disk file on close.  diskless=True
    when opening a file creates an in-memory copy of the file for faster access.
 
@@ -1096,7 +1251,7 @@ version 0.8.1 (svn revision 744)
 
  * Experimental variable-length (vlen) data type support added.
 
- * changes to accomodate compound types in netcdf-4.1-beta snapshots.
+ * changes to accommodate compound types in netcdf-4.1-beta snapshots.
    Compound types now work correctly for snapshots >= 20090603.
 
  * Added __len__ method and 'size' property to Variable class.
@@ -1107,7 +1262,7 @@ version 0.8.1 (svn revision 744)
 
  * Fixed bug occurring when indexing with a numpy array of length 1.
 
- * Fixed bug that occured when -1 was used as a variable index.
+ * Fixed bug that occurred when -1 was used as a variable index.
 
  * enabled 'shared access' mode for NETCDF3 formatted files (mode='ws',
    'r+s' or 'as'). Writes in shared mode are unbuffered, which can
@@ -1276,7 +1431,7 @@ version 0.7.3 (svn revision 501)
   to work as slice indices.
 
 * (netCDF4_classic only) try to make sure file is not left in 'define mode'
-  when execption is raised.
+  when exception is raised.
 
 * if slicing a variable results in a array with shape (1,), just return
   a scalar (except for compound types).

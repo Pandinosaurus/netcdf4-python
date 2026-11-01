@@ -1,4 +1,3 @@
-from __future__ import print_function
 from netCDF4 import Dataset
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import numpy as np
@@ -29,7 +28,7 @@ for i in range(nfiles):
     nc.close()
 
 # Queue them up
-items = queue.Queue()
+items: queue.Queue = queue.Queue()
 for data,fname in zip(datal,fnames):
     items.put(fname)
 

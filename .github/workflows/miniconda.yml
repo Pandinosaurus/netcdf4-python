@@ -8,75 +8,97 @@ on:
 jobs:
   run-serial:
     runs-on: ${{ matrix.os }}
+    #env:
+    #  NO_NET: 1
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: [
+            ["python", "3.11"],
+            ["python", "3.12"],
+            ["python", "3.13"],
+            ["python", "3.14"],
+            ["python", "3.15"],
+            ["python-freethreading", "3.14" ],
+        ]
         os: [windows-latest, ubuntu-latest, macos-latest]
         platform: [x64, x32]
         exclude:
-          - os: macos-latest  
+          - os: macos-latest
             platform: x32
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup Conda
-      uses: s-weigand/setup-conda@v1
+    - uses: actions/checkout@v7
       with:
-        activate-conda: false
-        conda-channels: conda-forge
+        submodules: true
 
-    - name: Python ${{ matrix.python-version }}
-      shell: bash -l {0}
+    - name: Setup Micromamba
+      uses: mamba-org/setup-micromamba@v3
+      with:
+        environment-name: TEST
+        init-shell: bash
+        create-args: >-
+          ${{ matrix.python-version[0] }}=${{ matrix.python-version[1] }}
+          numpy cython pip setuptools pytest hdf5 libnetcdf cftime zlib certifi typing-extensions
+          --channel conda-forge
+
+    - name: Install netcdf4-python
       run: |
-        conda create --name TEST python=${{ matrix.python-version }} numpy cython pip pytest hdf5 libnetcdf cftime --strict-channel-priority
-        source activate TEST
         export PATH="${CONDA_PREFIX}/bin:${CONDA_PREFIX}/Library/bin:$PATH" # so setup.py finds nc-config
-        pip install -e . --no-deps --force-reinstall
-        conda info --all
-        conda list
+        python -m pip install -v -e . --no-deps --no-build-isolation --force-reinstall
 
     - name: Tests
-      shell: bash -l {0}
       run: |
-        source activate TEST
-        cd test && python run_all.py
+        if [ "$RUNNER_OS" == "Windows" ]; then
+           export HDF5_PLUGIN_PATH="${CONDA_PREFIX}\\Library\\hdf5\\lib\\plugin"
+        else
+           export HDF5_PLUGIN_PATH="${CONDA_PREFIX}/lib/hdf5/plugin/"
+        fi
+        pytest -s -rxs -v test
 
   run-mpi:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ "3.9" ]
+        python-version: [ "3.12" ]
         os: [ubuntu-latest]
         platform: [x64]
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup Conda
-      uses: s-weigand/setup-conda@v1
+    - uses: actions/checkout@v7
       with:
-        activate-conda: false
-        conda-channels: conda-forge
+        submodules: true
 
-    - name: Python ${{ matrix.python-version }}
-      shell: bash -l {0}
+    - name: Setup Micromamba
+      uses: mamba-org/setup-micromamba@v3
+      with:
+        environment-name: TEST
+        init-shell: bash
+        create-args: >-
+          python=${{ matrix.python-version }}
+          numpy cython pip pytest openmpi mpi4py hdf5=*=mpi* libnetcdf=*=mpi* cftime zlib certifi typing-extensions
+          --channel conda-forge
+
+    - name: Install netcdf4-python with mpi
       run: |
-        conda create --name TEST python=${{ matrix.python-version }} numpy cython pip pytest mpi4py hdf5=*=mpi* libnetcdf=*=mpi* cftime --strict-channel-priority
-        source activate TEST
         export PATH="${CONDA_PREFIX}/bin:${CONDA_PREFIX}/Library/bin:$PATH" # so setup.py finds nc-config
-        pip install -e . --no-deps --force-reinstall
-        conda info --all
-        conda list
+        nc-config --all
+        python -m pip install -v -e . --no-build-isolation --no-deps --force-reinstall
 
     - name: Tests
-      shell: bash -l {0}
       run: |
-        source activate TEST
         cd test && python run_all.py
         cd ../examples
-        export PATH="${CONDA_PREFIX}/bin:${CONDA_PREFIX}/Library/bin:$PATH" 
+        export PATH="${CONDA_PREFIX}/bin:${CONDA_PREFIX}/Library/bin:$PATH"
         which mpirun
         mpirun --version
-        mpirun  --oversubscribe -np 4 python mpi_example.py
+        mpirun -np 4 --oversubscribe python mpi_example.py # for openmpi
+        #mpirun -np 4 python mpi_example.py
         if [ $? -ne 0 ] ; then
           echo "hdf5 mpi test failed!"
           exit 1
